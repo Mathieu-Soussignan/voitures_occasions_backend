@@ -25,6 +25,7 @@ clustering_df = pd.read_csv(clustering_csv_path)
 # Configurer le logging
 logging.basicConfig(level=logging.INFO)
 
+# Initialiser l'application FastAPI
 app = FastAPI()
 router = APIRouter()
 
@@ -49,6 +50,12 @@ def get_db():
 random_forest_model = joblib.load("./models/random_forest_model.pkl")
 logistic_model = joblib.load("./models/logistic_regression_model.pkl")
 
+# Endpoint de base pour vérifier le statut de l'API
+@app.get("/")
+def root():
+    return {"message": "Welcome to the Voitures Occasions API!"}
+
+# Endpoints CRUD pour les véhicules
 @app.get("/vehicules/", response_model=list[schemas.Vehicule])
 def read_vehicules(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return crud.get_vehicules(db, skip=skip, limit=limit)
@@ -68,6 +75,7 @@ def update_vehicule(vehicule_id: int, vehicule_update: schemas.VehiculeUpdate, d
 def delete_vehicule(vehicule_id: int, db: Session = Depends(get_db)):
     return crud.delete_vehicule(db=db, vehicule_id=vehicule_id)
 
+# Endpoint pour prédire le prix du véhicule
 class PredictRequest(BaseModel):
     kilometrage: float
     annee: int
@@ -149,7 +157,7 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
     return {"message": "Utilisateur supprimé avec succès"}
 
-# Utiliser des variables différentes pour chaque dataframe
+# Endpoints pour les données de visualisation
 @router.get("/data/year-brand-distribution")
 def get_year_brand_distribution():
     # Connexion à la base de données SQLite
@@ -171,8 +179,8 @@ def get_year_brand_distribution():
     conn.close()
     
     # Voir les données agrégées avant de les renvoyer
-    print("Aperçu des données agrégées par année et marque :")
-    print(year_brand_df.head())
+    logging.info("Aperçu des données agrégées par année et marque :")
+    logging.info(year_brand_df.head())
     
     # Convertir le DataFrame en liste de dictionnaires pour l'API
     response_data = year_brand_df.to_dict(orient="records")
@@ -180,10 +188,9 @@ def get_year_brand_distribution():
     # Retourner les données au frontend
     return response_data
 
-
 @router.get("/data/clustering")
 def get_clustering_data():
     return clustering_df.to_dict(orient="records")
 
-# Inclure le router
-app.include_router(router)
+# Inclure le router avec un préfixe pour les données
+app.include_router(router, prefix="/data")
