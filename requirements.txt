@@ -10,7 +10,9 @@ SQLAlchemy==2.0.36
 starlette==0.41.3
 typing_extensions==4.12.2
 selenium==4.5.0
-pandas==1.5.0
+pandas==2.2.3
+numpy==2.0.2
+tzdata==2024.2
 matplotlib==3.6.0
 seaborn==0.12.0
 uvicorn==0.22.0  # Mise à jour vers une version plus récente
