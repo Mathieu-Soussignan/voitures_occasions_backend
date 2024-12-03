@@ -32,8 +32,10 @@ router = APIRouter()
 # Ajouter le middleware CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://voiture-occasions-frontend.vercel.app"]
-    ["https://predict-car.vercel.app"],  # Remplace "*" par l'URL de ton frontend en production pour plus de sécurité
+    allow_origins=[
+        "https://voiture-occasions-frontend.vercel.app",
+        "https://predict-car.vercel.app"
+    ],  # Liste des URLs autorisées
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
