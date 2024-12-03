@@ -13,7 +13,11 @@ selenium==4.5.0
 pandas==1.5.0
 matplotlib==3.6.0
 seaborn==0.12.0
-uvicorn==0.18.0 
+uvicorn==0.22.0  # Mise à jour vers une version plus récente
 sqlite-utils==3.25.0
 webdriver-manager==3.8.5
-requests
+requests==2.31.0  # Ajout de la version pour requests
+scikit-learn==1.5.2
+joblib==1.4.2
+scipy==1.13.1
+threadpoolctl==3.5.0

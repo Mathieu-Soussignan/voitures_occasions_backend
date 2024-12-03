@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 from . import models, schemas
-import bcrypt
 
 # Fonction pour obtenir la liste des véhicules
 def get_vehicules(db: Session, skip: int = 0, limit: int = 10):
