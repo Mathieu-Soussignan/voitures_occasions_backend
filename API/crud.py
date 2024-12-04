@@ -49,8 +49,11 @@ def delete_vehicule(db: Session, vehicule_id: int):
 
 # Fonction pour créer un nouvel utilisateur
 def create_user(db: Session, user: schemas.UserCreate):
-    hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
-    db_user = models.User(email=user.email, username=user.username, hashed_password=hashed_password.decode('utf-8'))
+    db_user = models.User(
+        username=user.username,
+        email=user.email,
+        hashed_password=user.password  # Utilisez hashed_password
+    )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

@@ -91,8 +91,15 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
 
     # Créer un nouvel utilisateur
-    new_user = schemas.UserCreate(username=user.username, email=user.email, password=hashed_password.decode('utf-8'))
-    return crud.create_user(db=db, user=new_user)
+    new_user = models.User(
+        username=user.username,
+        email=user.email,
+        hashed_password=hashed_password.decode('utf-8')  # Assurez-vous d'utiliser hashed_password ici
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
 # Endpoint pour la connexion
 @app.post("/login")
