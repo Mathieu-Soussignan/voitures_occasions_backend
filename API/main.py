@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, APIRouter
+from fastapi import FastAPI, HTTPException, Depends, APIRouter, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +11,10 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 import os
 import sqlite3
+import bcrypt
+import jwt
+from datetime import datetime, timedelta
+from fastapi.security import OAuth2PasswordBearer
 
 # Utiliser un chemin absolu basé sur le dossier actuel
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -53,10 +57,82 @@ def get_db():
 random_forest_model = joblib.load("./models/random_forest_model.pkl")
 logistic_model = joblib.load("./models/logistic_regression_model.pkl")
 
+# Sécurité pour la clé secrète JWT
+SECRET_KEY = "SECRET_JWT_KEY"  # Changez cela pour un secret sécurisé
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
 # Endpoint de base pour vérifier le statut de l'API
 @app.get("/")
 def root():
     return {"message": "Welcome to the Voitures Occasions API!"}
+
+# Modèle pour la création d'un utilisateur
+class UserCreate(BaseModel):
+    username: str
+    email: str
+    password: str
+
+# Modèle pour la connexion d'un utilisateur
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+# Endpoint pour l'inscription
+@app.post("/register", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    # Vérifier si l'utilisateur existe déjà
+    db_user = crud.get_user_by_username(db, username=user.username)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Nom d'utilisateur déjà pris")
+
+    # Hash du mot de passe
+    hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
+
+    # Créer un nouvel utilisateur
+    new_user = schemas.UserCreate(username=user.username, email=user.email, password=hashed_password.decode('utf-8'))
+    return crud.create_user(db=db, user=new_user)
+
+# Endpoint pour la connexion
+@app.post("/login")
+def login(user: UserLogin, db: Session = Depends(get_db)):
+    # Chercher l'utilisateur par le nom d'utilisateur
+    db_user = crud.get_user_by_username(db, username=user.username)
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Nom d'utilisateur ou mot de passe incorrect")
+
+    # Vérifier le mot de passe
+    if not bcrypt.checkpw(user.password.encode('utf-8'), db_user.hashed_password.encode('utf-8')):
+        raise HTTPException(status_code=400, detail="Nom d'utilisateur ou mot de passe incorrect")
+
+    # Créer un token JWT
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    payload = {
+        "sub": db_user.username,
+        "exp": datetime.utcnow() + access_token_expires
+    }
+    access_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+    return {"access_token": access_token, "token_type": "bearer"}
+
+# Middleware pour authentifier l'utilisateur à l'aide du token JWT
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Utilisateur non trouvé")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expiré")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalide")
+
+    db_user = crud.get_user_by_username(db, username=username)
+    if db_user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Utilisateur non trouvé")
+
+    return db_user
 
 # Endpoints CRUD pour les véhicules
 @app.get("/vehicules/", response_model=list[schemas.Vehicule])
@@ -136,6 +212,11 @@ def predict_combined(request: PredictRequest):
     except Exception as e:
         logging.error(f"Erreur lors de la prédiction combinée: {e}")
         raise HTTPException(status_code=400, detail="Erreur lors de la prédiction combinée")
+
+# Endpoint protégé pour obtenir les informations sur l'utilisateur connecté
+@app.get("/users/me/", response_model=schemas.User)
+def read_users_me(current_user: schemas.User = Depends(get_current_user)):
+    return current_user
 
 # Endpoints CRUD pour les utilisateurs
 @app.get("/users/", response_model=list[schemas.User])

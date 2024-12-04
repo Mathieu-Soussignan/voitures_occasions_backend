@@ -17,6 +17,7 @@ class Vehicule(Base):
     # Relations
     carburant = relationship("Carburant", lazy="joined")
     transmission = relationship("Transmission", lazy="joined")
+    marque = relationship("Marque", lazy="joined")
 
 class Carburant(Base):
     __tablename__ = "Carburant"
@@ -38,5 +39,5 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    nom = Column(String, nullable=False)
-    password = Column(String, nullable=False)
+    username = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)

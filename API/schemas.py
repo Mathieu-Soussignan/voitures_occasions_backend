@@ -57,6 +57,8 @@ class PredictRequest(BaseModel):
     marque: str
     carburant: str
     transmission: str
+    modele: str
+    etat: str
 
     class Config:
         schema_extra = {
@@ -65,7 +67,9 @@ class PredictRequest(BaseModel):
                 "annee": 2019,
                 "marque": "Peugeot",
                 "carburant": "Essence",
-                "transmission": "Manuelle"
+                "transmission": "Manuelle",
+                "modele": "208",
+                "etat": "Occasion"
             }
         }
 
@@ -83,20 +87,23 @@ class Vehicule(VehiculeBase):
     id: int
     carburant: Optional[Carburant] = None
     transmission: Optional[Transmission] = None
+    marque: Optional[Marque] = None
 
     class Config:
         orm_mode = True
-        
-class UserCreate(BaseModel):
+
+class UserBase(BaseModel):
     email: str
-    nom: str
+    username: str
+
+class UserCreate(UserBase):
     password: str
 
 # Schéma pour la lecture d'un utilisateur (par exemple, lors de la récupération de ses informations)
 class UserRead(BaseModel):
     id: int
     email: str
-    nom: str
+    username: str
 
     class Config:
         orm_mode = True
@@ -104,13 +111,14 @@ class UserRead(BaseModel):
 # Schéma pour la mise à jour d'un utilisateur
 class UserUpdate(BaseModel):
     email: Optional[str] = None
-    nom: Optional[str] = None
+    username: Optional[str] = None
     password: Optional[str] = None
     
 class User(BaseModel):
     id: int
     email: str
-    nom: str
+    username: str
+    hashed_password: str
 
     class Config:
         orm_mode = True
