@@ -55,7 +55,7 @@ def get_db():
 
 # Charger les modèles nécessaires
 random_forest_model = joblib.load("./models/random_forest_model.pkl")
-logistic_model = joblib.load("./models/logistic_regression_model.pkl")
+logistic_model = joblib.load("./models/gradient_boosting_classifier.pkl")
 
 # Sécurité pour la clé secrète JWT
 SECRET_KEY = "SECRET_JWT_KEY"  # Changez cela pour un secret sécurisé
