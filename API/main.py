@@ -54,7 +54,7 @@ def get_db():
         db.close()
 
 # Charger les modèles nécessaires
-random_forest_model = joblib.load("./models/random_forest_model.pkl")
+random_forest_model = joblib.load("./models/random_forest_improved.pkl")
 logistic_model = joblib.load("./models/gradient_boosting_classifier.pkl")
 
 # Sécurité pour la clé secrète JWT
@@ -66,7 +66,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 # Endpoint de base pour vérifier le statut de l'API
 @app.get("/")
 def root():
-    return {"message": "Welcome to the Voitures Occasions API!"}
+    return {"message": "Bienvenue sur le backend de Voitures Occasions !"}
 
 # Modèle pour la création d'un utilisateur
 class UserCreate(BaseModel):
