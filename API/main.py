@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends, APIRouter, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +18,7 @@ import jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
 from sklearn.model_selection import learning_curve
+import json
 
 # Utiliser un chemin absolu basé sur le dossier actuel
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -281,41 +283,20 @@ def get_year_brand_distribution():
     # Retourner les données au frontend
     return response_data
 
-@app.get("/learning-curve-random-forest")
-def get_learning_curve():
-    # Charger le modèle et les données
-    model = joblib.load("models/random_forest_improved.pkl")
-    data = pd.read_csv("data/cleaned/voitures_aramisauto_nettoye.csv")
+@app.get("/learning-curve-random-forest", response_class=JSONResponse)
+async def get_learning_curve():
+    # Définir le chemin vers le fichier JSON
+    file_path = os.path.join(os.path.dirname(__file__), "../static/learning_curve.json")
 
-    # Vérifier si la colonne 'Prix_binaire' existe, sinon la créer
-    if "Prix_binaire" not in data.columns:
-        threshold = data["Prix"].median()
-        data["Prix_binaire"] = (data["Prix"] > threshold).astype(int)
-
-    # Préparer les données pour la courbe d'apprentissage
-    X = data.drop(columns=["Prix", "Prix_binaire"])
-    y = data["Prix"]
-
-    # Calcul de la courbe d'apprentissage
-    train_sizes, train_scores, validation_scores = learning_curve(
-        model,
-        X,
-        y,
-        cv=5,
-        scoring="neg_mean_squared_error",
-        train_sizes=np.linspace(0.1, 1.0, 10),
-        n_jobs=-1,
-    )
-
-    # Moyenne des scores et conversion à des erreurs positives
-    train_scores_mean = -np.mean(train_scores, axis=1)
-    validation_scores_mean = -np.mean(validation_scores, axis=1)
-
-    return {
-        "training_sizes": train_sizes.tolist(),
-        "training_scores": train_scores_mean.tolist(),
-        "validation_scores": validation_scores_mean.tolist(),
-    }
+    # Charger les données depuis le fichier
+    try:
+        with open(file_path, "r") as file:
+            data = json.load(file)
+        return data
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Fichier JSON introuvable.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur serveur : {str(e)}")
 
 @router.get("/data/clustering")
 def get_clustering_data():
