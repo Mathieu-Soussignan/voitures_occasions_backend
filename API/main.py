@@ -17,8 +17,8 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
-from sklearn.model_selection import learning_curve
-import json
+# from sklearn.model_selection import learning_curve
+# import json
 
 # Utiliser un chemin absolu basé sur le dossier actuel
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -283,20 +283,20 @@ def get_year_brand_distribution():
     # Retourner les données au frontend
     return response_data
 
-@app.get("/learning-curve-random-forest", response_class=JSONResponse)
-async def get_learning_curve():
-    # Définir le chemin vers le fichier JSON
-    file_path = os.path.join(os.path.dirname(__file__), "../static/learning_curve.json")
+# @app.get("/learning-curve-random-forest", response_class=JSONResponse)
+# async def get_learning_curve():
+#     # Définir le chemin vers le fichier JSON
+#     file_path = os.path.join(os.path.dirname(__file__), "../static/learning_curve.json")
 
-    # Charger les données depuis le fichier
-    try:
-        with open(file_path, "r") as file:
-            data = json.load(file)
-        return data
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Fichier JSON introuvable.")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur serveur : {str(e)}")
+#     # Charger les données depuis le fichier
+#     try:
+#         with open(file_path, "r") as file:
+#             data = json.load(file)
+#         return data
+#     except FileNotFoundError:
+#         raise HTTPException(status_code=404, detail="Fichier JSON introuvable.")
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Erreur serveur : {str(e)}")
 
 @router.get("/data/clustering")
 def get_clustering_data():
